@@ -21,7 +21,7 @@ class Detector:
 
     def connect_serial(self, com):
         try:
-            return serial.Serial(com, 9600, timeout=0.01)
+            return serial.Serial(com, 9600, timeout=0.1)
         except serial.SerialException as e:
             print(f"Failed to connect to {com}: {e}")
             raise
@@ -40,8 +40,14 @@ class Detector:
             reply_bytes = self.serial_connection.read(self.serial_connection.in_waiting)
             try:
                 reply = reply_bytes.decode().strip()
-                self.mode = "silo" if reply == '1' else team
-                print(f"RECEIVED: {reply} , Mode: {self.mode}")
+                print(type(reply))
+                if reply == "1":
+                    self.mode = "silo"
+                    print(f"If: {reply}e , Mode: {self.mode}")
+                else:
+                    self.mode = team
+                    print(f"else: {reply}e , Mode: {self.mode}")
+                # print(f"RECEIVED: {self.mode} , Mode: {self.mode}")
                 return reply
             except UnicodeDecodeError:
                 print("Failed to decode received data.")
@@ -64,12 +70,10 @@ class Detector:
     def detect_objects(self, frame):
         results = self.model(frame, conf, show=False, verbose=False)
         balls, silos = self.process_results(results)
-
         if self.mode == "silo":
             frame, x_center, y_center, max_area = self.handle_silo_mode(frame, balls, silos)
         else:
             frame, x_center, y_center, max_area = self.handle_ball_mode(frame, balls)
-
         return frame, x_center, y_center, max_area
 
     def process_results(self, results):
