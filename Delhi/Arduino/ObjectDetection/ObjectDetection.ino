@@ -48,7 +48,7 @@ int zhanda = 0;
 float vy;
 float front;
 int omega = 0;
-int servoAngle = 90;
+int servoAngle = 75;
 
 void calculateWheelSpeeds(float front, float vy, float omega, int speeds[]);
 void setMotorSpeeds(int speeds[]);
@@ -94,20 +94,22 @@ void setup() {
 
 ////////////////////////////////////////////////////////////////
 void loop() {
-  limitstatedown = digitalRead(limitdown);
-  if (limitstatedown == 0) {
-    if ( zhanda == 0) {
-      digitalWrite(dirPinclaw, LOW);
-      for (int x = 0; x < 700; x++) {
-        digitalWrite(stepPinclaw, HIGH);
-        delayMicroseconds(speedoclaw);
-        digitalWrite(stepPinclaw, LOW);
-        delayMicroseconds(speedoclaw);
+
+  if (Serial.available() > 0)
+  {
+    limitstatedown = digitalRead(limitdown);
+    if (limitstatedown == 0) {
+      if ( zhanda == 0) {
+        digitalWrite(dirPinclaw, LOW);
+        for (int x = 0; x < 650; x++) {
+          digitalWrite(stepPinclaw, HIGH);
+          delayMicroseconds(speedoclaw);
+          digitalWrite(stepPinclaw, LOW);
+          delayMicroseconds(speedoclaw);
+        }
+        zhanda = 1;
       }
-      zhanda = 1;
     }
-  }
-  if (Serial.available() > 0) {
     String data = Serial.readStringUntil('\r');
 
     int firstCommaIndex = data.indexOf(',');
@@ -121,16 +123,16 @@ void loop() {
     int y_coordinate = y_str.toInt();
     int area_value = area_str.toInt();
 
-    omega = map(x_coordinate, -320, 320, -55, 55);
-    vy = map(y_coordinate, -240, 240, -120, 120);
-    front = map(area_value, 160, 20, -30, 70);
+    omega = map(x_coordinate, -550, 550, -55, 55);
+    vy = map(y_coordinate, -360, 360, -120, 120);
+    front = map(area_value, 135, 1, -30, 70);
 
     //    Serial.println(servoAngle);
 
-    if (servoAngle < 75 || vy < -80)
+    if (servoAngle < 50 || vy < -80)
     {
-      front = front / 2;
-      vy = omega / 2;
+      front = front / 1.8;
+      vy = omega / 1.8;
       calculateWheelSpeeds(front, vy, 0, speeds);
       setMotorSpeeds(speeds);
     }
@@ -146,13 +148,15 @@ void loop() {
       pickupMechanism();
     }
     else if (distance2 < 15  && distance < 12 && digitalRead(limitup) == 0 ) {
-      place();
+      if (chisu == 1); {
+        place();
+      }
     }
 
     //////////////////
 
     if (x_coordinate == 0 && y_coordinate == 0) {
-      calculateWheelSpeeds(0, 0, 23, speeds);
+      calculateWheelSpeeds(0, 0, 25, speeds);
       setMotorSpeeds(speeds);
     } else if (omega > 8 || omega < -8 ) {
       calculateWheelSpeeds(front, 0, omega, speeds);
@@ -165,22 +169,20 @@ void loop() {
     }
 
     if (vy > 30) {
-      servoAngle = min(servoAngle + 1, 90);
+      servoAngle = min(servoAngle + 2, 75);
     } else if (vy < -26) {
-      servoAngle = max(servoAngle - 1, 45);
+      servoAngle = max(servoAngle - 2, 15);
     }
     myservo.write(servoAngle);
     ultrasonic();
-
-
   }
 }
 
 void calculateWheelSpeeds(float front, float vy, float omega, int speeds[]) {
-  speeds[0] = (front + vy + omega) / 1.15; // Front left wheel
-  speeds[1] = (front - vy - omega) / 1.15; // Front right wheel
-  speeds[2] = (front - vy + omega) / 1.15; // Rear left wheel
-  speeds[3] = (front + vy - omega) / 1.15; // Rear right wheel
+  speeds[0] = (front + vy + omega) ; // Front left wheel
+  speeds[1] = (front - vy - omega) ; // Front right wheel
+  speeds[2] = (front - vy + omega) ; // Rear left wheel
+  speeds[3] = (front + vy - omega) ; // Rear right wheel
 
   for (int i = 0; i < 4; i++) {
     speeds[i] = constrain(speeds[i], -100, 100);
@@ -189,7 +191,7 @@ void calculateWheelSpeeds(float front, float vy, float omega, int speeds[]) {
 
 void setMotorSpeeds(int speeds[])
 {
-  const float smoothingFactor = 0.6; // Adjust this value as needed for smoother movement
+  const float smoothingFactor = 0.9; // Adjust this value as needed for smoother movement
   for (int i = 0; i < 4; i++)
   {
     speedsSmooth[i] = smoothingFactor * speeds[i] + (1 - smoothingFactor) * speedsSmooth[i];
@@ -240,10 +242,10 @@ void ultrasonic()
 
 void pickupMechanism() {
   stopMotors();
-  
+
   ////gripper close
   digitalWrite(dirPinclaw, HIGH);
-  for (int x = 0; x < 700; x++)
+  for (int x = 0; x < 600; x++)
   {
     digitalWrite(stepPinclaw, HIGH);
     delayMicroseconds(speedoclaw);
@@ -259,19 +261,42 @@ void pickupMechanism() {
     digitalWrite(stepPin, LOW);
     delayMicroseconds(speedo);
   }
-
-  if (distance2 < 15)
+  ultrasonic();
+  if (distance2 > 20)
   {
-    chisu = 1;
+    ////gripper open
+    digitalWrite(dirPinclaw, LOW);
+    for (int x = 0; x < 600; x++)
+    {
+      digitalWrite(stepPinclaw, HIGH);
+      delayMicroseconds(speedoclaw);
+      digitalWrite(stepPinclaw, LOW);
+      delayMicroseconds(speedoclaw);
+    }
+    //gripper down
+    digitalWrite(dirPin, HIGH);
+    while (digitalRead(limitdown) == 1)
+    {
+      digitalWrite(stepPin, HIGH);
+      delayMicroseconds(speedo);
+      digitalWrite(stepPin, LOW);
+      delayMicroseconds(speedo);
+    }
+    chisu = 0;
+    Serial.println(chisu);
 
+  }
+  else if (distance2 < 15) {
     servoAngle = 90;
     myservo.write(servoAngle);
+    chisu = 1;
     Serial.println(chisu);
   }
 }
 
 
 void place() {
+
   stopMotors();
   //gripper open
   digitalWrite(dirPinclaw, LOW);
@@ -292,7 +317,7 @@ void place() {
 
   for ( int i = 0 ; i < 15000 ; i++)
   {
-    calculateWheelSpeeds(0, 0, -40, speeds);
+    calculateWheelSpeeds(0, 0, 40, speeds);
     setMotorSpeeds(speeds);
   }
   //  gripper down
