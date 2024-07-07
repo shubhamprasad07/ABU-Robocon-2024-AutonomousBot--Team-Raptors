@@ -4,14 +4,16 @@ from ultralytics import YOLO
 from time import time
 import serial
 
-desired_width = 1280
-desired_height = 720
-com = "com3"
+conf=0.25
+desired_width = 1980
+desired_height = 1080
+com = "com14"
 team = "blue"
 camera = 1
 
+
 class Detector:
-    def __init__(self, model_path='C:\\Users\\Nayan\\Desktop\\code\\best.pt'):
+    def __init__(self, model_path='C:\\Users\\Sanket jain\\OneDrive\\Desktop\\shubham\\AutonomousBot-main\\ObjectDetection\\last(5).pt'):
         self.model = YOLO(model_path).to('cuda')
         self.fps_list = []
         self.mode = team
@@ -19,7 +21,7 @@ class Detector:
 
     def connect_serial(self, com):
         try:
-            return serial.Serial(com, 9600, timeout=0.1)
+            return serial.Serial(com, 9600, timeout=0.01)
         except serial.SerialException as e:
             print(f"Failed to connect to {com}: {e}")
             raise
@@ -39,7 +41,7 @@ class Detector:
             try:
                 reply = reply_bytes.decode().strip()
                 self.mode = "silo" if reply == '1' else team
-                # print(f"RECEIVED: {reply} , Counter : {self.count} , Mode: {self.mode}")
+                print(f"RECEIVED: {reply} , Mode: {self.mode}")
                 return reply
             except UnicodeDecodeError:
                 print("Failed to decode received data.")
@@ -54,15 +56,13 @@ class Detector:
         
         if self.is_detected(max_area):
             message = f'{x_center},{y_center},{max_area}\r'
-            # print("if : " , message )
+            # print(f"Send : {message}")
         else:
             message = f'{0},{0},{0}\r'
-
-        # print(f"Send : {message}")
         return message
 
     def detect_objects(self, frame):
-        results = self.model(frame, conf=0.6, show=False, verbose=False)
+        results = self.model(frame, conf, show=False, verbose=False)
         balls, silos = self.process_results(results)
 
         if self.mode == "silo":
@@ -150,6 +150,7 @@ class Detector:
 
     def draw_silo_info(self, frame, balls, silos, silo_ball_count, silo_vector, best_silo):
         x_center, y_center, area = 0, 0, 0
+        scores = []
         for ball in balls:
             x1, y1, x2, y2, label = ball
             center = self.get_center(ball[:4])
@@ -166,6 +167,33 @@ class Detector:
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(frame, f"{label} L{ball_level}" if ball_level > 0 else label, 
                         (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+        # Calculate scores for silos
+        for i, silo in enumerate(silos):
+            red_count = sum(1 for row in silo_vector[1:4] if row[i] == 'R')
+            blue_count = sum(1 for row in silo_vector[1:4] if row[i] == 'B')
+            ball_count = silo_vector[0][i]
+
+            if ball_count >= 3:
+                score = float('inf')  # No preference
+            elif red_count == 2 and blue_count == 0:
+                score = 5
+            elif red_count == 0 and blue_count == 2:
+                score = 6
+            elif red_count == 1 and blue_count == 0:
+                score = 1  # Most preferable
+            elif red_count == 1 and blue_count == 1:
+                score = 2
+            elif red_count == 0 and blue_count == 1:
+                score = 4
+            elif red_count == 0 and blue_count == 0:
+                score = 3
+            else:
+                score = float('inf')  # No preference
+
+            scores.append((score, i))
+
+        best_silo = max(scores, key=lambda x: x[0])[1] if scores else -1
 
         for i, silo in enumerate(silos):
             sx1, sy1, sx2, sy2 = silo[:4]
