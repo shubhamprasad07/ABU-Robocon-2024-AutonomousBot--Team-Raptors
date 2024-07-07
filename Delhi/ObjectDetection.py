@@ -26,8 +26,8 @@ class Detector:
             print(f"Failed to connect to {com}: {e}")
             raise
 
-    def is_detected(self, area):
-        return 1 <= area <= 100
+    def is_detected(self, x , y , area):
+        return x > -900 and y < 500
     
     def send_arduino(self, message):
         try:
@@ -54,11 +54,11 @@ class Detector:
         max_area = int(round(max_area / (width * height), 2) * 100)
         x_center, y_center = int(x_center), int(y_center)
         
-        if self.is_detected(max_area):
+        if self.is_detected( x_center, y_center , max_area):
             message = f'{x_center},{y_center},{max_area}\r'
-            # print(f"Send : {message}")
         else:
             message = f'{0},{0},{0}\r'
+        # print(f"Send : {message}")
         return message
 
     def detect_objects(self, frame):
@@ -219,13 +219,19 @@ class Detector:
             area = self.get_area(ball[:4])
             x_center, y_center = self.get_center(ball[:4])
             
-            class_counts[label] = class_counts.get(label, 0) + 1
+            # Increment class count
+            if label in class_counts:
+                class_counts[label] += 1
+            else:
+                class_counts[label] = 1
 
+            # Update max_info if this is the largest area seen so far for this label
             if label not in max_info or (area > max_info[label]['area'] and y_center > max_info[label]['y_center']):
                 max_info[label] = {'area': area, 'x_center': x_center, 'y_center': y_center, 'box': (x1, y1, x2, y2)}
 
             self.draw_annotations(frame, ball, class_counts[label])
 
+        # Highlight the largest detected object for the current mode
         if self.mode in max_info:
             x1, y1, x2, y2 = max_info[self.mode]['box']
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
