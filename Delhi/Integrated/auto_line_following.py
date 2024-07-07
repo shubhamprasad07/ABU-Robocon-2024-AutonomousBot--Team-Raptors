@@ -1,33 +1,28 @@
 #import libraries
-import obj_Detection as obj
+import auto_ball_detection as obj
 import cv2
 import numpy as np
 import time
 import serial
 
 #initial parameters
-
 Team = 'NA'
 Zone = 'NA'
 Turn = 'NA'
-Cm_status = 'NA'    #Camera status
 White_line_detection = 'NA'
-Cross_section = 'NA'
-Retry_zone = 'NA'
-Current_zone = 'NA'
 Bot_State = 'NA'
-Color = 'NA'
+
 P1 = 0
 P2 = 0
 P3 = 0
+
 error = 0
 cmd = str(error) + ',' + '140,0' + "\r"
-color_count = 0
-drive_State = str(0) + '\r'
+#drive_State = str(0) + '\r'
 
 #Functions:
 #red color mask function
-def red_mask(self, frame):
+def red_mask(frame):
     # convert bgr to hsv
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -35,27 +30,31 @@ def red_mask(self, frame):
     lower_red = np.array([0,99,186])
     upper_red = np.array([0,255,255])
 
-    # Threshold the HSV image to get only blue colors
+    # Threshold the HSV image to get only red colors
     mask = cv2.inRange(hsv, lower_red, upper_red)
+    kernel = np.ones((7,7), np.uint8)
+    mask = cv2.dilate(mask,kernel,iterations=2)
 
     return mask
 
 #blue color mask function
-def blue_mask(self, frame):
+def blue_mask(frame):
     # convert bgr to hsv
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # define range of red color in hsv
-    lower_blue = np.array([0,0,0])
-    upper_blue = np.array([0,0,0])
+    # define range of blue color in hsv
+    lower_blue = np.array([94,80,2])
+    upper_blue = np.array([126,255,255])
 
     # Threshold the HSV image to get only blue colors
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    kernel = np.ones((7,7),np.uint8)
+    mask = cv2.dilate(mask,kernel,iterations=2)
 
     return mask
 
 #white color mask function
-def white_mask(self, roi):
+def white_mask(roi):
     # Convert ROI to grayscale
     gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
@@ -74,14 +73,14 @@ def white_mask(self, roi):
     return white_lines
 
 #line follower function
-def line_follower(frame,roi,White_line_detection,color_count): #parameters:- original frame and roi of whiteline for line follower
+def line_follower(frame, roi, White_line_detection): # parameters: original frame and roi of white line for line follower
     setpoint = 320
     error = 0
 
-# Find contours of the black lines
+    # Find contours of the black lines
     contours, _ = cv2.findContours(roi.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-# If contours are found
+    # If contours are found
     if len(contours) > 0:
         White_line_detection = 'Yes'
         # Get the bounding rectangle of the largest contour
@@ -94,58 +93,52 @@ def line_follower(frame,roi,White_line_detection,color_count): #parameters:- ori
         center_line = x + int(w / 2)
         error = center_line - setpoint
 
-        if color_count == 2 and error < 10:
-            error = 0
-
         # Display error on the image
         centertext = "Error = " +  str(error)
         cv2.putText(frame, centertext, (200, 340), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
 
         # Display regions of P2||P1||P3
-        #P1 region
-        cv2.rectangle(frame,(170,0),(490,120),(0,0,255),3)
+        # P1 region
+        cv2.rectangle(frame, (170, 0), (490, 120), (0, 0, 255), 3)
 
-        #P2 region
-        cv2.rectangle(frame,(0,125),(170,250),(0,0,255),3)
+        # P2 region
+        cv2.rectangle(frame, (0, 125), (170, 250), (0, 0, 255), 3)
 
-        #P3 region
-        cv2.rectangle(frame,(490,125),(639,250),(0,0,255),3)
+        # P3 region
+        cv2.rectangle(frame, (490, 125), (639, 250), (0, 0, 255), 3)
 
-        #line follower error region
-        cv2.rectangle(frame,(0,125),(639,250),(0,255,0),3)
+        # Line follower error region
+        cv2.rectangle(frame, (0, 125), (639, 250), (0, 255, 0), 3)
 
-        return error,White_line_detection
+    return error, White_line_detection
 
 #Rotate function
 def rotate(Turn):
-    cmd = ""
+    error = ""
     if Turn == 'Left':
-        cmd = 'L' + ',' + '140,0' + "\r"
+        error = 'L'
     elif Turn == 'Right':
-        cmd = 'R' + ',' + '140,0' + "\r"
-    return cmd
+        error = 'R'
+    return error
 
 #Cross-section detection function
 def Cross_section_detection(P1,P2,P3,error):
-    error = error
     cmd = str(error) + ',' + '140,0' + "\r"
     State = 'Running'
     if P2 > 100000 and P1 > 1000000 and P3 > 100000:
         cmd = 'S' + ',' + '140,0' + "\r"
         State = 'Stop'
-        return cmd,State
-    
-#Initializing serial communication
-ser = serial.Serial('COM9', 9600)
-time.sleep(2)
-ser.write(str(drive_State).encode())
+    return cmd,State
 
-#import video path
+#Initializing serial communication
+ser = serial.Serial('COM14', 9600)
+time.sleep(2)
+
+#Import video path
 video_path = "vid9.mp4"
 
 #Capture video from file
-cap = cv2.VideoCapture(0)
-# cap.set(cv2.CAP_PROP_EXPOSURE , 100)
+cap = cv2.VideoCapture(1)
 
 while True:
     # Read frame from video
@@ -155,16 +148,11 @@ while True:
     if not ret:
         # Reload the video
         cap.release()
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
         continue
 
-    # Resize the frame to 640x360)
+    # Resize the frame to 640x360
     frame = cv2.resize(frame, (640, 360))
-
-    frame = cv2.convertScaleAbs(frame,alpha = 1,beta=0)
-    
-    # Rotate the frame by 180
-    #frame = cv2.rotate(frame,cv2.ROTATE_180)
 
     # Create copy of main frame
     frame_copy1 = frame.copy()
@@ -178,92 +166,75 @@ while True:
     roi4 = frame_copy2[175:275, 0:639]
     roi5 = frame_copy3[0:360, 0:639]
 
-    #red mask call
+    # Red mask call
     r_mask = red_mask(frame)
 
-    #blue mask call
+    # Blue mask call
     b_mask = blue_mask(frame)
 
-    #P1 mask
+    # P1 mask
     P1_mask = white_mask(roi1)
 
-    #P2 mask
+    # P2 mask
     P2_mask = white_mask(roi2)
 
-    #P3 mask
+    # P3 mask
     P3_mask = white_mask(roi3)
 
-    #Line following mask
+    # Line following mask
     Line_mask = white_mask(roi4)
 
-    #white mask for full screen
+    # White mask for full screen
     m = white_mask(roi5)
 
-    #Calculation of pixel summation 
+    # Calculation of pixel summation 
     P1 = np.sum(P1_mask)
     P2 = np.sum(P2_mask)
     P3 = np.sum(P3_mask)
 
-    #Logical Conditions or line following algorithm
+    # Logical Conditions or line following algorithm
     if np.any(r_mask == 255):
         Team = "Red"
-        Detection = "Red"
         Turn = "Left"
+
+        error,White_line_detection = line_follower(frame,Line_mask,White_line_detection)
+        cmd,Bot_State = Cross_section_detection(P1,P2,P3,error)
+        
         if P1 == 0 and P2 == 0 and P3 == 0:
             Zone = "Retry_Zone"
-            cmd = rotate(Turn)
+            error = rotate(Turn)
+            cmd = str(error) + ',' + '140,0' + "\r"
             ser.write(str(cmd).encode())
-        else:
+        elif P1 > 0 and P2 > 0 and P3 == 0:
+            Zone = "Retry_Zone"
+            error = 0
+        elif P1 > 0 and P2 == 0 and P3 == 0:
             Zone = "Starting_Zone"
-        
-        if Color != Detection:
-            color_count += 1
-        print("Count: ",color_count)
-
-        error,White_line_detection = line_follower(frame,Line_mask,White_line_detection,color_count)
-        cmd,Bot_State = Cross_section_detection(P1,P2,P3,error)
-        if Bot_State == "Stop":
-            cmd = 'S' + ',' + '140,0' + "\r"
-            ser.write(str(cmd).encode())
-            print('Stop')
-            break
-            
-        Color = "Red"
+            error = 0
+               
     elif np.any(b_mask == 255):
-        Detection = "Blue"
         Team = "Blue"
         Turn = "Right"
+
+        error,White_line_detection = line_follower(frame,Line_mask,White_line_detection)
+        cmd,Bot_State = Cross_section_detection(P1,P2,P3,error)
+        
         if P1 == 0 and P2 == 0 and P3 == 0:
             Zone = "Retry_Zone"
-            cmd = rotate(Turn)
+            error = rotate(Turn)
+            cmd = str(error) + ',' + '140,0' + "\r"
             ser.write(str(cmd).encode())
-        else:
+        elif P1 > 0 and P2 == 0 and P3 > 0:
+            Zone = "Retry_Zone"
+            error = 0
+        elif P1 > 0 and P2 == 0 and P3 == 0:
             Zone = "Starting_Zone"
-
-        if Color != Detection:
-            color_count += 1
-
-        error,White_line_detection = line_follower(frame,Line_mask,White_line_detection,color_count)
-        cmd,Bot_State = Cross_section_detection(P1,P2,P3,error)
-        if Bot_State == "Stop":
-            cmd = 'S' + ',' + '140,0' + "\r"
-            ser.write(str(cmd).encode())
-            print('stop')
-            break
-            
-        Color = "Blue"
+            error = 0
         
     else:
-        T_list = [Team,Zone]
-        if T_list[0] == 'Red' and T_list[1] == 'Retry_Zone':
-            cmd = rotate(Turn)
-            ser.write(str(cmd).encode())
-        elif T_list[0] == 'Blue' and T_list[1] == 'Retry_Zone':
-            cmd = rotate(Turn)
-            ser.write(str(cmd).encode())
-        if color_count == 2:
-            color_count = 0
-        error,White_line_detection = line_follower(frame,Line_mask,White_line_detection,color_count)
+        Team = 'NA'
+        Zone = 'NA'
+        error,White_line_detection = line_follower(frame,Line_mask,White_line_detection)
         cmd,Bot_State = Cross_section_detection(P1,P2,P3,error)
         if Bot_State == "Stop":
             cmd = 'S' + ',' + '140,0' + "\r"
@@ -271,23 +242,20 @@ while True:
             print('stop')
             break
         
-            
-
-    #Display the frames
+    # Display the frames
     cv2.imshow('Frame', frame)
     cv2.imshow('Red mask',r_mask)
     cv2.imshow('White mask',m)
-    cv2.imshow("P1 mask",P1_mask)
-    cv2.imshow("P2 mask",P2_mask)
-    cv2.imshow("P3 mask",P3_mask)
-
+    #cv2.imshow("P1 mask",P1_mask)
+    #cv2.imshow("P2 mask",P2_mask)
+    #cv2.imshow("P3 mask",P3_mask)
 
     # Check for key press
     key = cv2.waitKey(25)
     if key == 27:  # Press 'Esc' to exit
         break
     
-    # Generating an command to send to arduino
+    # Generating a command to send to Arduino
     cmd = str(error) + ',' + '140,0' + "\r"
     ser.write(str(cmd).encode())
     print(cmd)
@@ -295,28 +263,22 @@ while True:
     # Print helps what's going on
     print("Team: ",Team,'||',
           "Zone: ",Zone,'||',
-          #"Current_Zone: ",Current_zone,'||',
           "Turn: ",Turn,'||',
-          "Camera_Status: ",Cm_status,'||',
           "White_Line_Detection: ",White_line_detection,'||',
-          #"Cross-Section: ",Cross_section,'||',
-          #"Retry_Zone: ",Retry_zone,'||',
           "  ",
           "P2: ",P2,'||',
           "P1: ",P1,"||",
           "P3: ",P3,"||",
-          "Error: ",error)
+          "Error: ",error,"||",
+          "Cmd: ",cmd)
 
+cv2.destroyAllWindows()
 # Release video capture object and close all windows
-
 try:
-    drive_State = str(1) + '\r'
-    ser.write(str(drive_State).encode())
     detector = obj.Detector()
-    detector.run()
-    
+    detector.run(ser)
 except Exception as e:
     print(f"An error occurred: {e}")
-    
+
 cap.release()
 cv2.destroyAllWindows()
