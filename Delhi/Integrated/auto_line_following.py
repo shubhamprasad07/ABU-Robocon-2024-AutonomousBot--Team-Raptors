@@ -43,8 +43,8 @@ def blue_mask(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # define range of blue color in hsv
-    lower_blue = np.array([94,80,2])
-    upper_blue = np.array([126,255,255])
+    lower_blue = np.array([0,0,0])
+    upper_blue = np.array([0,0,0])
 
     # Threshold the HSV image to get only blue colors
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
@@ -135,10 +135,10 @@ ser = serial.Serial('COM14', 9600)
 time.sleep(2)
 
 #Import video path
-video_path = "vid9.mp4"
+video_path = "C:\\Users\\Sanket jain\\OneDrive\\Desktop\\shubham\\AutonomousBot-main\\testing now\\vid9.mp4"
 
 #Capture video from file
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(video_path)
 
 while True:
     # Read frame from video
@@ -148,11 +148,13 @@ while True:
     if not ret:
         # Reload the video
         cap.release()
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(video_path)
         continue
 
     # Resize the frame to 640x360
     frame = cv2.resize(frame, (640, 360))
+
+    frame = cv2.rotate(frame,cv2.ROTATE_180)
 
     # Create copy of main frame
     frame_copy1 = frame.copy()
@@ -258,7 +260,7 @@ while True:
     # Generating a command to send to Arduino
     cmd = str(error) + ',' + '140,0' + "\r"
     ser.write(str(cmd).encode())
-    print(cmd)
+    #print(cmd)
 
     # Print helps what's going on
     print("Team: ",Team,'||',
@@ -282,3 +284,4 @@ except Exception as e:
 
 cap.release()
 cv2.destroyAllWindows()
+ser.close()
