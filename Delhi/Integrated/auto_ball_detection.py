@@ -40,14 +40,11 @@ class Detector:
             reply_bytes = serial_connection.read(serial_connection.in_waiting)
             try:
                 reply = reply_bytes.decode().strip()
-                print(type(reply))
                 if reply == "1":
                     self.mode = "silo"
-                    print(f"If: {reply}e , Mode: {self.mode}")
                 else:
                     self.mode = team
-                    print(f"else: {reply}e , Mode: {self.mode}")
-                # print(f"RECEIVED: {self.mode} , Mode: {self.mode}")
+                print(f"RECEIVED: {self.mode} , Mode: {self.mode}")
                 return reply
             except UnicodeDecodeError:
                 print("Failed to decode received data.")
@@ -293,6 +290,9 @@ class Detector:
 
         cap.release()
         cv2.destroyAllWindows()
+        message = f'S,{0},{0}\r'
+        self.send_arduino(message , serial_connection)
+        serial_connection.close()
 
     def update_fps(self, elapsed_time):
         self.fps_list.append(1 / elapsed_time)
