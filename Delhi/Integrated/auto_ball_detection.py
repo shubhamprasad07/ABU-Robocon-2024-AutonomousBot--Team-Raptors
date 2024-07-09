@@ -1,3 +1,4 @@
+com = "com11"
 import numpy as np
 import cv2
 from ultralytics import YOLO
@@ -7,10 +8,8 @@ import serial
 conf=0.25
 desired_width = 1980
 desired_height = 1080
-com = "com14"
 team = "blue"
 camera = 1
-
 
 class Detector:
     def __init__(self, model_path='C:\\Users\\Sanket jain\\OneDrive\\Desktop\\shubham\\AutonomousBot-main\\ObjectDetection\\last(5).pt'):
@@ -18,6 +17,7 @@ class Detector:
         self.fps_list = []
         self.mode = team
         # self.serial_connection = self.connect_serial(com)
+        conf=0.25
 
     def connect_serial(self, com):
         try:
@@ -34,22 +34,24 @@ class Detector:
             serial_connection.write(message.encode())
         except serial.SerialException:
             print("Failed to send message to Arduino.")
-    
+
     def get_arduino(self , serial_connection):
         if serial_connection.in_waiting:
             reply_bytes = serial_connection.read(serial_connection.in_waiting)
             try:
-                reply = reply_bytes.decode().strip()
+                reply = reply_bytes.decode().strip()                    
                 if reply == "1":
                     self.mode = "silo"
-                else:
+                    print(f"Recived : {reply} , Mode : {self.mode}")
+                elif reply == "0":
                     self.mode = team
-                print(f"RECEIVED: {self.mode} , Mode: {self.mode}")
+                    print(f"Recived : {reply} , Mode : {self.mode}")
                 return reply
             except UnicodeDecodeError:
                 print("Failed to decode received data.")
                 return None
-        return None
+        else:
+            return None
 
     def arduino_calculation(self, x_center, y_center, max_area, width, height):
         x_center = x_center - (width // 2)
@@ -61,18 +63,17 @@ class Detector:
             message = f'{x_center},{y_center},{max_area}\r'
         else:
             message = f'{0},{0},{0}\r'
-        # print(f"Send : {message}")
         return message
-
+    
     def detect_objects(self, frame):
         results = self.model(frame, conf, show=False, verbose=False)
         balls, silos = self.process_results(results)
         if self.mode == "silo":
             frame, x_center, y_center, max_area = self.handle_silo_mode(frame, balls, silos)
         else:
-            frame, x_center, y_center, max_area = self.handle_ball_mode(frame, balls)
+            frame, x_center, y_center, max_area = self.handle_ball_mode(frame, balls , silos)
         return frame, x_center, y_center, max_area
-
+    
     def process_results(self, results):
         balls, silos = [], []
         for result in results:
@@ -141,17 +142,19 @@ class Detector:
             
             else:
                 score = float('inf')               # No preference
-
-            scores.append((score, i))
+            if score != float('inf'):
+                scores.append((score, i))
         if not scores:
             best_silo = -1
         else:
-            best_silo = min(scores, key=lambda x: x[0])[1]
+            if team == "blue":
+                best_silo = max(scores, key=lambda x: x[0])[1]
+            elif team == "red":
+                best_silo = min(scores, key=lambda x: x[0])[1]        
         return silo_vector, best_silo
 
     def draw_silo_info(self, frame, balls, silos, silo_ball_count, silo_vector, best_silo):
         x_center, y_center, area = 0, 0, 0
-        scores = []
         for ball in balls:
             x1, y1, x2, y2, label = ball
             center = self.get_center(ball[:4])
@@ -169,33 +172,6 @@ class Detector:
             cv2.putText(frame, f"{label} L{ball_level}" if ball_level > 0 else label, 
                         (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        # Calculate scores for silos
-        for i, silo in enumerate(silos):
-            red_count = sum(1 for row in silo_vector[1:4] if row[i] == 'R')
-            blue_count = sum(1 for row in silo_vector[1:4] if row[i] == 'B')
-            ball_count = silo_vector[0][i]
-
-            if ball_count >= 3:
-                score = float('inf')  # No preference
-            elif red_count == 2 and blue_count == 0:
-                score = 5
-            elif red_count == 0 and blue_count == 2:
-                score = 6
-            elif red_count == 1 and blue_count == 0:
-                score = 1  # Most preferable
-            elif red_count == 1 and blue_count == 1:
-                score = 2
-            elif red_count == 0 and blue_count == 1:
-                score = 4
-            elif red_count == 0 and blue_count == 0:
-                score = 3
-            else:
-                score = float('inf')  # No preference
-
-            scores.append((score, i))
-
-        best_silo = max(scores, key=lambda x: x[0])[1] if scores else -1
-
         for i, silo in enumerate(silos):
             sx1, sy1, sx2, sy2 = silo[:4]
             info = f"Silo {i+1} - Red: {silo_ball_count[i]['red']} Blue: {silo_ball_count[i]['blue']}"
@@ -211,7 +187,7 @@ class Detector:
                 
         return frame, x_center, y_center, area
 
-    def handle_ball_mode(self, frame, balls):
+    def handle_ball_mode(self, frame, balls , silos):
         class_counts = {}
         max_info = {}
 
@@ -220,6 +196,10 @@ class Detector:
             area = self.get_area(ball[:4])
             x_center, y_center = self.get_center(ball[:4])
             
+            # Skip balls that are inside any silo
+            if self.is_inside_any_silo((x_center, y_center), silos):
+                continue
+
             # Increment class count
             if label in class_counts:
                 class_counts[label] += 1
@@ -258,6 +238,12 @@ class Detector:
         px, py = point
         x1, y1, x2, y2 = box
         return x1 <= px <= x2 and y1 <= py <= y2
+    
+    def is_inside_any_silo(self, point, silos):
+        for silo in silos:
+            if self.is_inside(point, silo[:4]):
+                return True
+        return False
 
     def run(self , serial_connection):
         cap = cv2.VideoCapture(camera)
@@ -276,10 +262,12 @@ class Detector:
                 break
 
             reply = self.get_arduino(serial_connection)
+            # print(f"RECEIVED: {reply}")
             frame, x_center, y_center, max_area = self.detect_objects(frame)
 
             message = self.arduino_calculation(x_center, y_center, max_area, frame.shape[1], frame.shape[0])
             self.send_arduino(message , serial_connection)
+            # print(f"Send : {message}")
 
             self.update_fps(time() - start_time)
             self.display_fps(frame)
@@ -290,9 +278,6 @@ class Detector:
 
         cap.release()
         cv2.destroyAllWindows()
-        message = f'S,{0},{0}\r'
-        self.send_arduino(message , serial_connection)
-        serial_connection.close()
 
     def update_fps(self, elapsed_time):
         self.fps_list.append(1 / elapsed_time)
