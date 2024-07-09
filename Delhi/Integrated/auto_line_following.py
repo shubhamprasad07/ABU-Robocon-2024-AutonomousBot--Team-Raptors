@@ -131,11 +131,11 @@ def Cross_section_detection(P1,P2,P3,error):
     return cmd,State
 
 #Initializing serial communication
-ser = serial.Serial('COM14', 9600)
+ser = serial.Serial('COM11', 9600 , timeout=0.1)
 time.sleep(2)
 
 #Import video path
-video_path = "C:\\Users\\Sanket jain\\OneDrive\\Desktop\\shubham\\AutonomousBot-main\\testing now\\vid9.mp4"
+video_path = "vid8.mp4"
 
 #Capture video from file
 cap = cv2.VideoCapture(video_path)
@@ -260,7 +260,7 @@ while True:
     # Generating a command to send to Arduino
     cmd = str(error) + ',' + '140,0' + "\r"
     ser.write(str(cmd).encode())
-    #print(cmd)
+    
 
     # Print helps what's going on
     print("Team: ",Team,'||',
@@ -273,8 +273,11 @@ while True:
           "P3: ",P3,"||",
           "Error: ",error,"||",
           "Cmd: ",cmd)
-
+    
 cv2.destroyAllWindows()
+# if ser.is_open:
+#     ser.close()
+#     print("Serial Closed")
 # Release video capture object and close all windows
 try:
     detector = obj.Detector()
@@ -284,4 +287,3 @@ except Exception as e:
 
 cap.release()
 cv2.destroyAllWindows()
-ser.close()
