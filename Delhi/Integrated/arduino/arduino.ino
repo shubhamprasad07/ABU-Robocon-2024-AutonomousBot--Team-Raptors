@@ -10,8 +10,7 @@ String x_str;
 String y_str;
 String area_str;
 
-
-int servo_pin {11};
+const int servo_pin = 11;
 int line_f = 45;
 int ball_d = 90;
 
@@ -56,8 +55,10 @@ const int ultra_trigger2 = 12;
 
 int distance = 100;
 int distance2 = 100;
-long duration;
-long duration2;
+volatile long duration;
+volatile long duration2;
+volatile bool echoReceived1 = false;
+volatile bool echoReceived2 = false;
 int zhanda = 0;
 
 int x_coordinate;
@@ -70,16 +71,20 @@ float front;
 int omega = 0;
 int servoAngle = 75;
 
+unsigned long lastUltrasonicRead = 0;
+unsigned long ultrasonicInterval = 50; // Adjust this value as needed
+
 void calculateWheelSpeedsObject(float front, float vy, float omega, int speeds[]);
 void calculateWheelSpeedsLine(float vx, float omega, int speeds[]);
 void setMotorSpeeds(int speeds[]);
 void stopMotors();
-void ultrasonic();
+void startUltrasonicRead();
 void pickupMechanism();
 void place();
 
 void setup() {
-
+  // Initialize serial communication
+  Serial.begin(9600);
   pinMode(MOTOR1_PWM, OUTPUT);
   pinMode(MOTOR1_DIR, OUTPUT);
   pinMode(MOTOR2_PWM, OUTPUT);
@@ -108,8 +113,7 @@ void setup() {
 
   // Claw up
   digitalWrite(dirPin, LOW);
-  while (digitalRead(limitup) == 1)
-  {
+  while (digitalRead(limitup) == 1) {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(speedo);
     digitalWrite(stepPin, LOW);
@@ -124,9 +128,6 @@ void setup() {
     digitalWrite(stepPinclaw, LOW);
     delayMicroseconds(speedo);
   }
-
-  // Initialize serial communication
-  Serial.begin(9600);
 }
 
 void loop() {
@@ -144,7 +145,6 @@ void loop() {
       x_str = data.substring(0, firstCommaIndex);
       y_str = data.substring(firstCommaIndex + 1, secondCommaIndex);
       area_str = data.substring(secondCommaIndex + 1);
-
 
       // Convert strings to integers
       x_coordinate = x_str.toInt();
@@ -166,17 +166,15 @@ void loop() {
         myservo.write(ball_d);
         delay(2000);
         drive_State = 1;
-        
+
         myservo.write(servoAngle);
-        
+
         limitstatedown = digitalRead(limitdown);
         if (limitstateup == 0) {
-          if ( zhanda == 0)
-          {
+          if ( zhanda == 0) {
             //gripper down
             digitalWrite(dirPin, HIGH);
-            while (digitalRead(limitdown) == 1)
-            {
+            while (digitalRead(limitdown) == 1) {
               digitalWrite(stepPin, HIGH);
               delayMicroseconds(speedo);
               digitalWrite(stepPin, LOW);
@@ -185,7 +183,6 @@ void loop() {
             zhanda = 1;
           }
         }
-
       }
 
       if (x_str == "L") {
@@ -194,37 +191,24 @@ void loop() {
         omega = -15.0;
         calculateWheelSpeedsLine(vx, omega, speeds);
         setMotorSpeeds(speeds);
-      }
-
-      else if (x_str == "R") {
+      } else if (x_str == "R") {
         vx = 0;
         vy = 0;
         omega = 15.0;
         calculateWheelSpeedsLine(vx, omega, speeds);
         setMotorSpeeds(speeds);
+      } else {
+        stopMotors();
       }
-
-      else {
-        //stopMotors();
-
-      }
-    }
-
-    else if (drive_State == 1)
-    {
+    } else if (drive_State == 1) {
 
       data = Serial.readStringUntil('\r');
-
+      Serial.println(data);
       firstCommaIndex = data.indexOf(',');
       secondCommaIndex = data.indexOf(',', firstCommaIndex + 1);
       x_str = data.substring(0, firstCommaIndex);
       y_str = data.substring(firstCommaIndex + 1, secondCommaIndex);
       area_str = data.substring(secondCommaIndex + 1);
-
-      if (x_str == 'S')
-      {
-        stopMotors();
-      }
 
       x_coordinate = x_str.toInt();
       y_coordinate = y_str.toInt();
@@ -235,63 +219,126 @@ void loop() {
 
       //    Serial.println(servoAngle);
 
-      if (servoAngle < 50 || y_coordinate < -80)
-      {
-        front = front / 1.8;
-        vy = omega / 1.8;
-        calculateWheelSpeedsObject(front, vy, 0, speeds);
-        setMotorSpeeds(speeds);
-      }
-      //
-      //      Serial.print(omega);
-      //      Serial.print(" , ");
-      //      Serial.print(vy);
-      //      Serial.print(" , ");
-      //      Serial.println(front);
-
-      if (distance < 13 && digitalRead(limitdown) == 0)
-      {
+      if (distance < 13 && digitalRead(limitdown) == 0) {
         pickupMechanism();
-      }
-      else if (distance2 < 15  && distance < 12 && digitalRead(limitup) == 0 ) {
-        if (chisu == 1); {
+      } else if (distance2 < 15  && distance < 12 && digitalRead(limitup) == 0 ) {
+        if (chisu == 1) {
           place();
         }
       }
 
-      if (x_coordinate == 0 && y_coordinate == 0) {
+      if (servoAngle < 50 || y_coordinate < -80) {
+        front = front / 1.8;
+        vy = omega / 1.8;
+        calculateWheelSpeedsObject(front, vy, 0, speeds);
+        setMotorSpeeds(speeds);
+      } else if (x_coordinate == 0 && y_coordinate == 0) {
         calculateWheelSpeedsObject(0, 0, 25, speeds);
         setMotorSpeeds(speeds);
-      }
-      else if (omega > 8 || omega < -8 ) {
+      } else if (omega > 8 || omega < -8 ) {
         calculateWheelSpeedsObject(front, 0, omega, speeds);
         setMotorSpeeds(speeds);
-      }
-      else if (omega < 8 || omega > -8) {
+      } else if (omega < 8 || omega > -8) {
         calculateWheelSpeedsObject(front, 0, 0, speeds);
         setMotorSpeeds(speeds);
       }
-      else {
-        stopMotors();
-      }
 
       if (vy > 50) {
-        servoAngle = min(servoAngle + 2, 75);
+        servoAngle = min(servoAngle + 1, 75);
+      } else if (vy < -50) {
+        servoAngle = max(servoAngle - 1, 15);
       }
-      else if (vy < -50) {
-        servoAngle = max(servoAngle - 2, 15);
-      }
+
       myservo.write(servoAngle);
-      ultrasonic();
     }
+  }
+
+  // Handle non-blocking ultrasonic sensor readings
+  if (millis() - lastUltrasonicRead > ultrasonicInterval) {
+    startUltrasonicRead();
+    lastUltrasonicRead = millis();
   }
 }
 
-void calculateWheelSpeedsLine(float vx, float omega, int speeds[]) {
-  speeds[0] = (vx + omega );   // Front left wheel
-  speeds[1] = (vx - omega );   // Front right wheel
-  speeds[2] = (vx + omega );  // Rear left wheel
-  speeds[3] = (vx - omega );  // Rear right wheel
+void startUltrasonicRead() {
+  // Trigger the ultrasonic sensors
+  digitalWrite(ultra_trigger, LOW);
+  delayMicroseconds(2);
+  digitalWrite(ultra_trigger, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ultra_trigger, LOW);
+  duration = pulseIn(ultra_echo, HIGH);
+  distance = duration * 0.034 / 2;
+
+  digitalWrite(ultra_trigger2, LOW);
+  delayMicroseconds(2);
+  digitalWrite(ultra_trigger2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ultra_trigger2, LOW);
+  duration2 = pulseIn(ultra_echo2, HIGH);
+  distance2 = duration2 * 0.034 / 2;
+}
+
+//void echoReceivedISR1() {
+//  static unsigned long startTime = 0;
+//  if (digitalRead(ultra_echo) == HIGH) {
+//    startTime = micros();
+//  } else {
+//    duration = micros() - startTime;
+//    distance = duration * 0.034 / 2;
+//    echoReceived1 = true;
+//  }
+//}
+//
+//void echoReceivedISR2() {
+//  static unsigned long startTime = 0;
+//  if (digitalRead(ultra_echo2) == HIGH) {
+//    startTime = micros();
+//  } else {
+//    duration2 = micros() - startTime;
+//    distance2 = duration2 * 0.034 / 2;
+//    echoReceived2 = true;
+//  }
+//}
+
+void pickupMechanism() {
+  stopMotors();
+  // Close the gripper
+
+  digitalWrite(dirPinclaw, HIGH); // Set direction
+  for (int x = 0; x < 600; x++) {
+    digitalWrite(stepPinclaw, HIGH);
+    delayMicroseconds(speedoclaw);
+    digitalWrite(stepPinclaw, LOW);
+    delayMicroseconds(speedoclaw);
+  }
+
+  chisu = 1;
+  Serial.println(chisu);
+
+  // Raise the gripper
+  digitalWrite(dirPin, LOW); // Set direction
+  while (digitalRead(limitup) == 1) {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(speedo);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(speedo);
+  }
+}
+
+void place() {
+  stopMotors();
+
+  // Open the gripper
+  digitalWrite(dirPinclaw, LOW); // Set direction
+  for (int x = 0; x < 600; x++) {
+    digitalWrite(stepPinclaw, HIGH);
+    delayMicroseconds(speedo);
+    digitalWrite(stepPinclaw, LOW);
+    delayMicroseconds(speedo);
+  }
+  chisu = 0;
+  Serial.println(chisu);
 }
 
 void calculateWheelSpeedsObject(float front, float vy, float omega, int speeds[]) {
@@ -301,29 +348,38 @@ void calculateWheelSpeedsObject(float front, float vy, float omega, int speeds[]
   speeds[3] = (front + vy - omega); // Rear right wheel
 
   for (int i = 0; i < 4; i++) {
-    speeds[i] = constrain(speeds[i], -100, 100);
+    speedsSmooth[i] = speedsSmooth[i] + 0.07 * (speeds[i] - speedsSmooth[i]);
   }
 }
 
-void setMotorSpeeds(int speeds[])
-{
-  const float smoothingFactor = 0.9; // Adjust this value as needed for smoother movement
-  for (int i = 0; i < 4; i++)
-  {
-    speedsSmooth[i] = smoothingFactor * speeds[i] + (1 - smoothingFactor) * speedsSmooth[i];
+void calculateWheelSpeedsLine(float vx, float omega, int speeds[]) {
+  speeds[0] = (vx + omega );   // Front left wheel
+  speeds[1] = (vx - omega );   // Front right wheel
+  speeds[2] = (vx + omega );  // Rear left wheel
+  speeds[3] = (vx - omega );  // Rear right wheel
+
+  for (int i = 0; i < 4; i++) {
+    speedsSmooth[i] = speeds[i];
   }
+}
 
-  analogWrite(MOTOR1_PWM, abs(speedsSmooth[0]));
-  digitalWrite(MOTOR1_DIR, speedsSmooth[0] < 0 ? HIGH : LOW);
+void setMotorSpeeds(int speeds[]) {
+  int motorPins[4][2] = {
+    {MOTOR1_PWM, MOTOR1_DIR},
+    {MOTOR2_PWM, MOTOR2_DIR},
+    {MOTOR3_PWM, MOTOR3_DIR},
+    {MOTOR4_PWM, MOTOR4_DIR}
+  };
 
-  analogWrite(MOTOR2_PWM, abs(speedsSmooth[1]));
-  digitalWrite(MOTOR2_DIR, speedsSmooth[1] < 0 ? HIGH : LOW);
-
-  analogWrite(MOTOR3_PWM, abs(speedsSmooth[2]));
-  digitalWrite(MOTOR3_DIR, speedsSmooth[2] < 0 ? HIGH : LOW);
-
-  analogWrite(MOTOR4_PWM, abs(speedsSmooth[3]));
-  digitalWrite(MOTOR4_DIR, speedsSmooth[3] < 0 ? HIGH : LOW);
+  for (int i = 0; i < 4; i++) {
+    if (speedsSmooth[i] >= 0) {
+      digitalWrite(motorPins[i][1], LOW);
+      analogWrite(motorPins[i][0], speedsSmooth[i]);
+    } else {
+      digitalWrite(motorPins[i][1], HIGH);
+      analogWrite(motorPins[i][0], -speedsSmooth[i]);
+    }
+  }
 }
 
 void stopMotors() {
@@ -331,121 +387,4 @@ void stopMotors() {
   analogWrite(MOTOR2_PWM, 0);
   analogWrite(MOTOR3_PWM, 0);
   analogWrite(MOTOR4_PWM, 0);
-}
-
-void ultrasonic()
-{
-  digitalWrite(ultra_trigger, LOW);
-  delayMicroseconds(2);
-  digitalWrite(ultra_trigger, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(ultra_trigger, LOW);
-  duration = pulseIn(ultra_echo, HIGH);
-  distance = duration * 0.034 / 2;
-
-
-  digitalWrite(ultra_trigger2, LOW);
-  delayMicroseconds(2);
-  digitalWrite(ultra_trigger2, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(ultra_trigger2, LOW);
-  duration2 = pulseIn(ultra_echo2, HIGH);
-  distance2 = duration2 * 0.034 / 2;
-
-  //  Serial.println(distance2);
-}
-
-void pickupMechanism() {
-  stopMotors();
-
-  ////gripper close
-  digitalWrite(dirPinclaw, HIGH);
-  for (int x = 0; x < 600; x++)
-  {
-    digitalWrite(stepPinclaw, HIGH);
-    delayMicroseconds(speedoclaw);
-    digitalWrite(stepPinclaw, LOW);
-    delayMicroseconds(speedoclaw);
-  }
-  //gripper up
-  digitalWrite(dirPin, LOW);
-  while (digitalRead(limitup) == 1)
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(speedo);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(speedo);
-  }
-  ultrasonic();
-  if (distance2 > 20)
-  {
-    ////gripper open
-    digitalWrite(dirPinclaw, LOW);
-    for (int x = 0; x < 600; x++)
-    {
-      digitalWrite(stepPinclaw, HIGH);
-      delayMicroseconds(speedoclaw);
-      digitalWrite(stepPinclaw, LOW);
-      delayMicroseconds(speedoclaw);
-    }
-    //gripper down
-    digitalWrite(dirPin, HIGH);
-    while (digitalRead(limitdown) == 1)
-    {
-      digitalWrite(stepPin, HIGH);
-      delayMicroseconds(speedo);
-      digitalWrite(stepPin, LOW);
-      delayMicroseconds(speedo);
-    }
-    chisu = 0;
-    Serial.println(chisu);
-
-  }
-  else if (distance2 < 15) {
-    servoAngle = 90;
-    myservo.write(servoAngle);
-    chisu = 1;
-    Serial.println(chisu);
-  }
-}
-
-void place() {
-  stopMotors();
-  //gripper open
-  digitalWrite(dirPinclaw, LOW);
-
-  for (int x = 0; x < 700; x++)
-  {
-    digitalWrite(stepPinclaw, HIGH);
-    delayMicroseconds(speedoclaw);
-    digitalWrite(stepPinclaw, LOW);
-    delayMicroseconds(speedoclaw);
-  }
-
-  for ( int i = 0 ; i < 20000 ; i++)
-  {
-    calculateWheelSpeedsObject(-45, 0, 0, speeds);
-    setMotorSpeeds(speeds);
-  }
-
-  for ( int i = 0 ; i < 15000 ; i++)
-  {
-    calculateWheelSpeedsObject(0, 0, 40, speeds);
-    setMotorSpeeds(speeds);
-  }
-  //  gripper down
-  digitalWrite(dirPin, HIGH);
-  while (digitalRead(limitdown) == 1)
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(speedo);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(speedo);
-  }
-  if (chisu != 0)
-  { // Check if chisu has changed
-    chisu = 0;
-    Serial.println(chisu);
-    myservo.write(75);
-  }
 }
