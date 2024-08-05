@@ -4,10 +4,6 @@
 
 Welcome to the Robocon Autonomous Bot project! This repository contains all the necessary code and documentation for the autonomous robot developed by Team Raptors from Dr. D.Y. Patil Institute of Technology for ABU Robocon 2024.
 
-## Explaination 
-### Integrated 
-  * [Integrated](Delhi/Integrated) has the files which can has both Line Following and Object Detection capability. 
-
 
 ## Table of Content  
   * [Introduction](#Introduction)
@@ -61,6 +57,13 @@ Install the necessary dependencies:
   pip install -r requirements.txt
 ```
 
+## Usage
+Running the bot:
+
+```bash
+  python filename.py
+```
+
 ## File Structure
 ```bash
 robocon-autonomous-bot/
@@ -76,13 +79,9 @@ robocon-autonomous-bot/
 ├── requirements.txt            # Python dependencies
 └── README.md                   # Project README
 ```
-
-## Usage
-Running the bot:
-
-```bash
-  python filename.py
-```
+## Explaination 
+### Integrated 
+  * [Integrated](Delhi/Integrated) has the files which can has both Line Following and Object Detection capability. 
 
 ## Contact
 For any questions or inquiries, please contact Shubham Prasad (AI Leader) at shubhamprasad7777@gmail.com.
