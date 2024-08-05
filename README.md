@@ -57,13 +57,6 @@ Install the necessary dependencies:
   pip install -r requirements.txt
 ```
 
-## Usage
-Running the bot:
-
-```bash
-  python filename.py
-```
-
 ## File Structure
 ```bash
 robocon-autonomous-bot/
@@ -82,6 +75,13 @@ robocon-autonomous-bot/
 ## Explaination 
 ### Integrated 
   * [Integrated](Delhi/Integrated) has the files which can has both Line Following and Object Detection capability. 
+
+## Usage
+Running the bot:
+
+```bash
+  python filename.py
+```
 
 ## Contact
 For any questions or inquiries, please contact Shubham Prasad (AI Leader) at shubhamprasad7777@gmail.com.
