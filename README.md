@@ -40,7 +40,6 @@ His project showcases the autonomous bot designed for the ABU Robocon 2024 compe
  - Python 3.9
  - OpenCV
  - YOLOv8
- - Hailo SDK
  - Other dependencies listed in requirements.txt
 
 ## Installation
