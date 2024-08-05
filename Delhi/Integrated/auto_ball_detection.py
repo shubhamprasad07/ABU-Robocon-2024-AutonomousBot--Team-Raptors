@@ -12,7 +12,7 @@ team = "blue"
 camera = 1
 
 class Detector:
-    def __init__(self, model_path='C:\\Users\\Sanket jain\\OneDrive\\Desktop\\shubham\\AutonomousBot-main\\ObjectDetection\\last(5).pt'):
+    def _init_(self, model_path='C:\\Users\\Sanket jain\\OneDrive\\Desktop\\shubham\\AutonomousBot-main\\ObjectDetection\\last(5).pt'):
         self.model = YOLO(model_path).to('cuda')
         self.fps_list = []
         self.mode = team
@@ -289,7 +289,7 @@ class Detector:
             avg_fps = sum(self.fps_list) / len(self.fps_list)
             cv2.putText(frame, f"FPS: {avg_fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     try:
         detector = Detector()
         detector.run()
