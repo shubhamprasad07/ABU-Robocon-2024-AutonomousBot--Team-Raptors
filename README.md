@@ -46,7 +46,7 @@ His project showcases the autonomous bot designed for the ABU Robocon 2024 compe
 ## Installation
 Clone the repository:
 ```bash
-  git clone https://link-to-project
+  git clone https://link-to-project](https://github.com/shubhamprasad07/ABU-Robocon-2024-AutonomousBot--Team-Raptors.git
 ```
 Install CUDA Toolkit:
 ```bash
