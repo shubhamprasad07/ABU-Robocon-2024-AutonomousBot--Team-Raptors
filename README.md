@@ -69,21 +69,21 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ```bash
 ABU-Robocon-2024-AutonomousBot--Team-Raptors/
 ├── Final/                     # Main code used in Robocon
-│   ├── Integrated/             # Combined logic of Line following and Object pickup
-│   ├── Seperate/                  # Seperated functionalities of Line following and Object pickup
-│   ├── Testing/                 # Sensor Testing code
+│   ├── Integrated/            # Combined logic of Line following and Object pickup
+│   ├── Seperate/              # Seperated functionalities of Line following and Object pickup
+│   ├── Testing/               # Sensor Testing code
 │   └── README.md 
 
-├── Images/                     # Robocon Images and Videos
+├── Images/                    # Robocon Images and Videos
 
-├── old_version/                        # Old Code
-│   ├── ObjectDetection/             # old object detection and following code
-│   ├── color/                  # old color detection and following code
-│   ├── linefollower/                 # old line following code
+├── old_version/               # Old Code
+│   ├── ObjectDetection/       # old object detection and following code
+│   ├── color/                 # old color detection and following code
+│   ├── linefollower/          # old line following code
 │   └── README.md                  
 
-├── requirements.txt            # Python dependencies
-└── README.md                   # Project README
+├── requirements.txt           # Python dependencies
+└── README.md                  # Project README
 ```
 ## Explaination 
   * [Integrated](Final/Integrated) has the files which can has both Line Following and Object Detection capability.
