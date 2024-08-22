@@ -7,6 +7,7 @@ Welcome to the Robocon Autonomous Bot project! This repository contains all the 
 Check out Releases to download the models.
 
 ## Table of Content  
+  * [Which files to use Explained](#IExplaination)
   * [Introduction](#Introduction)
   * [Features](#Features)
   * [Hardware Requirements](#Hardware-Requirements)
@@ -59,30 +60,43 @@ Install the necessary dependencies:
   pip install -r requirements.txt
 ```
 
+Install Cuda supported Torch
+```
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
 ## File Structure
 ```bash
-robocon-autonomous-bot/
-├── models/                     # Pre-trained models
-├── src/                        # Source code
-│   ├── navigation/             # Navigation algorithms
-│   ├── tasks/                  # Task execution logic
-│   ├── vision/                 # Vision system code
-│   └── main.py                 # Main execution script
-├── config/                     # Configuration files
-├── docs/                       # Documentation
-├── tests/                      # Test scripts
+ABU-Robocon-2024-AutonomousBot--Team-Raptors/
+├── Final/                     # Main code used in Robocon
+│   ├── Integrated/             # Combined logic of Line following and Object pickup
+│   ├── Seperate/                  # Seperated functionalities of Line following and Object pickup
+│   ├── Testing/                 # Sensor Testing code
+│   └── README.md 
+
+├── Images/                     # Robocon Images and Videos
+
+├── old_version/                        # Old Code
+│   ├── ObjectDetection/             # old object detection and following code
+│   ├── color/                  # old color detection and following code
+│   ├── linefollower/                 # old line following code
+│   └── README.md                  
+
 ├── requirements.txt            # Python dependencies
 └── README.md                   # Project README
 ```
 ## Explaination 
-### Integrated 
-  * [Integrated](Delhi/Integrated) has the files which can has both Line Following and Object Detection capability. 
+  * [Integrated](Final/Integrated) has the files which can has both Line Following and Object Detection capability.
+  * [Seperate](Final/Seperate) has both functionalities seperated.
+  * [Testing](Final/Testing) has testing tools for sensors.
+  * [old_version](old_versions) has previous versions of the codes.
 
 ## Usage
 Running the bot:
 
+go to Final/Integrated/auto_line_following.py
 ```bash
-  python filename.py
+  python auto_line_following.py
 ```
 
 ## Contact
