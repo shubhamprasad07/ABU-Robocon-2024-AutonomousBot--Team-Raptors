@@ -7,7 +7,7 @@ Welcome to the Robocon Autonomous Bot project! This repository contains all the 
 Check out Releases to download the models.
 
 ## Table of Content  
-  * [Which files to use Explained](#IExplaination)
+  * [Which files to use Explained](#Explaination)
   * [Introduction](#Introduction)
   * [Features](#Features)
   * [Hardware Requirements](#Hardware-Requirements)
