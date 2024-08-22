@@ -4,7 +4,7 @@
 
 Welcome to the Robocon Autonomous Bot project! This repository contains all the necessary code and documentation for the autonomous robot developed by Team Raptors from Dr. D.Y. Patil Institute of Technology for ABU Robocon 2024.
 
-Check out Releases to download the models.
+### You can download the models from the [Release page](https://github.com/shubhamprasad07/ABU-Robocon-2024-AutonomousBot--Team-Raptors/releases/tag/v0.0.1)
 
 ## Table of Content  
   * [Which files to use Explained](#Explaination)
