@@ -4,6 +4,9 @@
 
 Welcome to the Robocon Autonomous Bot project! This repository contains all the necessary code and documentation for the autonomous robot developed by Team Raptors from Dr. D.Y. Patil Institute of Technology for ABU Robocon 2024.
 
+#### Creators
+![Team](Images/Team-Raptors.jpg)
+
 ### You can download the models from the [Release page](https://github.com/shubhamprasad07/ABU-Robocon-2024-AutonomousBot--Team-Raptors/releases/tag/Yolov8-Models)
 
 ## Table of Content  
@@ -18,7 +21,8 @@ Welcome to the Robocon Autonomous Bot project! This repository contains all the 
   * [Contact](#Contact)
 
 ## Introduction
-
+#### Autonomous Bot
+<img src="Images/Autonomous-Bot.jpg" alt="Autonomous Bot" width="500"/>
 His project showcases the autonomous bot designed for the ABU Robocon 2024 competition. The bot is capable of navigating the competition arena autonomously, performing tasks, and interacting with the environment as per the competition rules.
 
 ## Features
@@ -26,6 +30,8 @@ His project showcases the autonomous bot designed for the ABU Robocon 2024 compe
  - Task Execution: Equipped with mechanisms to perform specific tasks required by the competition.
  - Vision System: Implements YOLOv8 for object detection to recognize and interact with objects in the arena.
  - Communication: Utilizes wireless communication for real-time data exchange and coordination.
+
+<img src="Images/Bots.jpg"  alt="Bots" width="500"/>
 
 ## Hardware Requirements
  - Arduino
@@ -36,12 +42,16 @@ His project showcases the autonomous bot designed for the ABU Robocon 2024 compe
  - Battery Pack
  - Other mechanical components as per the design
 
+<img src="Images/test.gif" alt="Test" width="500"/>
+
 ## Software Requirements
  - Window/Linux OS
  - Python 3.9
  - OpenCV
  - YOLOv8
  - Other dependencies listed in requirements.txt
+
+<img src="Images/objectDetection.gif" alt="Object Detection" width="500"/>
 
 ## Installation
 Clone the repository:
@@ -100,4 +110,6 @@ go to Final/Integrated/auto_line_following.py
 ```
 
 ## Contact
-For any questions or inquiries, please contact Shubham Prasad (AI Leader) at shubhamprasad7777@gmail.com.
+For any questions or inquiries, please contact Shubham Prasad at shubhamprasad7777@gmail.com.
+
+<img src="Images/AI-Team.jpg"  alt="AI" width="500"/>
