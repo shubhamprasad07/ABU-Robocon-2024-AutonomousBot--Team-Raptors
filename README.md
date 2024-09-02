@@ -91,7 +91,7 @@ ABU-Robocon-2024-AutonomousBot--Team-Raptors/
 │   ├── color/                 # old color detection and following code
 │   ├── linefollower/          # old line following code
 │   └── README.md                  
-
+├── YOLOv8.ipynb               # to train a yolov8 object detection model
 ├── requirements.txt           # Python dependencies
 └── README.md                  # Project README
 ```
@@ -100,6 +100,7 @@ ABU-Robocon-2024-AutonomousBot--Team-Raptors/
   * [Seperate](Final/Seperate) has both functionalities seperated.
   * [Testing](Final/Testing) has testing tools for sensors.
   * [old_version](old_versions) has previous versions of the codes.
+  * [Yolov8.ipynb](YOLOv8.ipynb) to train a yolov8 object detection model
 
 ## Usage
 Running the bot:
