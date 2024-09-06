@@ -23,7 +23,7 @@ Welcome to the Robocon Autonomous Bot project! This repository contains all the 
 ## Introduction
 #### Autonomous Bot
 <img src="Images/Autonomous-Bot.jpg" alt="Autonomous Bot" width="500"/>
-His project showcases the autonomous bot designed for the ABU Robocon 2024 competition. The bot is capable of navigating the competition arena autonomously, performing tasks, and interacting with the environment as per the competition rules.
+This project showcases the autonomous bot designed for the ABU Robocon 2024 competition. The bot is capable of navigating the competition arena autonomously, performing tasks, and interacting with the environment as per the competition rules.
 
 ## Features
 - Autonomous Navigation: Uses advanced algorithms for path planning and obstacle avoidance.
