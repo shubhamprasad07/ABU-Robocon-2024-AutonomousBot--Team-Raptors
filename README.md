@@ -44,7 +44,7 @@ This project showcases the autonomous bot designed for the ABU Robocon 2024 comp
 
 <div style="width: 500px; height: auto; text-align: center;">
   <img src="Images/test.gif" alt="Object Detection" style="display:none;" onload="this.style.display='block'; document.getElementById('loading').style.display='none';" width="500"/>
-  <p id="loading" style="display:block;">Loading Object Detection GIF...</p>
+  <p id="loading" style="display:block;"> >>LOADING Testing Video . . . . </p>
 </div>
 
 ## Software Requirements
@@ -56,7 +56,7 @@ This project showcases the autonomous bot designed for the ABU Robocon 2024 comp
 
 <div style="width: 500px; height: auto; text-align: center;">
   <img src="Images/objectDetection.gif" alt="Object Detection" style="display:none;" onload="this.style.display='block'; document.getElementById('loading').style.display='none';" width="500"/>
-  <p id="loading" style="display:block;">Loading Object Detection GIF...</p>
+  <p id="loading" style="display:block;"> >>LOADING Object Detection Video . . . .</p>
 </div>
 
 ## Installation
