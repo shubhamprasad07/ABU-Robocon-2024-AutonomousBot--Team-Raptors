@@ -42,7 +42,10 @@ This project showcases the autonomous bot designed for the ABU Robocon 2024 comp
  - Battery Pack
  - Other mechanical components as per the design
 
-<img src="Images/test.gif" alt="Test" width="500"/>
+<div style="width: 500px; height: auto; text-align: center;">
+  <img src="Images/test.gif" alt="Object Detection" style="display:none;" onload="this.style.display='block'; document.getElementById('loading').style.display='none';" width="500"/>
+  <p id="loading" style="display:block;">Loading Object Detection GIF...</p>
+</div>
 
 ## Software Requirements
  - Window/Linux OS
@@ -51,7 +54,10 @@ This project showcases the autonomous bot designed for the ABU Robocon 2024 comp
  - YOLOv8
  - Other dependencies listed in requirements.txt
 
-<img src="Images/objectDetection.gif" alt="Object Detection" width="500"/>
+<div style="width: 500px; height: auto; text-align: center;">
+  <img src="Images/objectDetection.gif" alt="Object Detection" style="display:none;" onload="this.style.display='block'; document.getElementById('loading').style.display='none';" width="500"/>
+  <p id="loading" style="display:block;">Loading Object Detection GIF...</p>
+</div>
 
 ## Installation
 Clone the repository:
